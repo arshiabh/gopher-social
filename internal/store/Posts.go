@@ -9,6 +9,7 @@ import (
 
 type PostStore interface {
 	Create(context.Context, *Post) error
+	GetByID(context.Context, int64) (*Post, error)
 }
 
 type Post struct {
@@ -46,4 +47,16 @@ func (s *PostgresPostStore) Create(ctx context.Context, post *Post) error {
 		return err
 	}
 	return nil
+}
+
+func (s *PostgresPostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
+	query := `
+	SELECT * FROM posts WHERE id = ($1);
+	`
+	var post Post
+	if err := s.db.QueryRowContext(ctx, query, postID).Scan(
+		&post.ID, &post.Tite, &post.UserID, &post.Content, &post.CreatedAt, pq.Array(&post.Tags), &post.UpdatedAt); err != nil {
+		return nil, err
+	}
+	return &post, nil
 }

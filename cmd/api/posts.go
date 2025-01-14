@@ -2,8 +2,10 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/arshiabh/gopher-social/internal/store"
+	"github.com/go-chi/chi/v5"
 )
 
 type CreatePostsParams struct {
@@ -29,4 +31,19 @@ func (app *application) HandleCreatePosts(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusAccepted, &post)
+}
+
+func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
+	idstr := chi.URLParam(r, "postID")
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	post, err := app.store.Posts.GetByID(r.Context(), id)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, post)
 }
