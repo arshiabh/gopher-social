@@ -41,7 +41,9 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/", app.Test)
+		r.Route("/posts", func(r chi.Router) {
+			r.Post("/", app.HandleCreatePosts)
+		})
 	})
 	return r
 }
@@ -56,8 +58,4 @@ func (app *application) run(mux http.Handler) error {
 	}
 	log.Printf("server run at %s", app.config.addr)
 	return srv.ListenAndServe()
-}
-
-func (app *application) Test(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello my frienddd"))
 }
