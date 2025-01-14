@@ -1,10 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"os"
 
+	"github.com/arshiabh/gopher-social/internal/db"
 	"github.com/arshiabh/gopher-social/internal/store"
 	"github.com/joho/godotenv"
 )
@@ -16,9 +16,19 @@ func main() {
 
 	cfg := config{
 		addr: os.Getenv("addr"),
+		db: dbconfig{
+			addr:         os.Getenv("DBaddr"),
+			maxOpenConns: 30,
+			maxIdleConns: 30,
+			maxIdleTime:  "15m",
+		},
 	}
-
-	store := store.NewPostgresStorage(&sql.DB{})
+	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer db.Close()
+	store := store.NewPostgresStorage(db)
 	app := &application{
 		config: cfg,
 		store:  store,
