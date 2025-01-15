@@ -13,13 +13,14 @@ type PostStore interface {
 }
 
 type Post struct {
-	ID        int64    `json:"id"`
-	Content   string   `json:"content"`
-	Tite      string   `json:"title"`
-	UserID    int64    `json:"user_id"`
-	Tags      []string `json:"tags"`
-	CreatedAt string   `json:"created_at"`
-	UpdatedAt string   `json:"updated_at"`
+	ID        int64      `json:"id"`
+	Content   string     `json:"content"`
+	Title     string     `json:"title"`
+	UserID    int64      `json:"user_id"`
+	Tags      []string   `json:"tags"`
+	CreatedAt string     `json:"created_at"`
+	UpdatedAt string     `json:"updated_at"`
+	Comments  []Comments `json:"comments"`
 }
 
 type PostgresPostStore struct {
@@ -39,7 +40,7 @@ func (s *PostgresPostStore) Create(ctx context.Context, post *Post) error {
 	`
 	err := s.db.QueryRowContext(ctx, query,
 		post.Content,
-		post.Tite,
+		post.Title,
 		post.UserID,
 		pq.Array(post.Tags),
 	).Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
@@ -55,7 +56,7 @@ func (s *PostgresPostStore) GetByID(ctx context.Context, postID int64) (*Post, e
 	`
 	var post Post
 	if err := s.db.QueryRowContext(ctx, query, postID).Scan(
-		&post.ID, &post.Tite, &post.UserID, &post.Content, &post.CreatedAt, pq.Array(&post.Tags), &post.UpdatedAt); err != nil {
+		&post.ID, &post.Title, &post.UserID, &post.Content, &post.CreatedAt, pq.Array(&post.Tags), &post.UpdatedAt); err != nil {
 		return nil, err
 	}
 	return &post, nil

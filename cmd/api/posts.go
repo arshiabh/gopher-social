@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -9,8 +10,8 @@ import (
 )
 
 type CreatePostsParams struct {
-	Content string   `json:"content"`
-	Title   string   `json:"title"`
+	Content string   `json:"content" validate:"required,max=100"`
+	Title   string   `json:"title"   validate:"required,max=1000"`
 	Tags    []string `json:"tags"`
 }
 
@@ -20,8 +21,14 @@ func (app *application) HandleCreatePosts(w http.ResponseWriter, r *http.Request
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	if err := validate.Struct(PostsParams); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	post := &store.Post{
-		Tite:    PostsParams.Title,
+		Title:   PostsParams.Title,
 		Content: PostsParams.Content,
 		Tags:    PostsParams.Tags,
 		UserID:  1,
@@ -45,5 +52,13 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	comments, err := app.store.Comments.GetByPostID(r.Context(), id)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	fmt.Println(comments)
+	post.Comments = comments 
 	writeJSON(w, http.StatusOK, post)
 }
+
