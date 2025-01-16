@@ -10,6 +10,8 @@ import (
 type PostStore interface {
 	Create(context.Context, *Post) error
 	GetByID(context.Context, int64) (*Post, error)
+	Delete(context.Context, int64) error
+	Patch(context.Context, *Post) error
 }
 
 type Post struct {
@@ -60,4 +62,30 @@ func (s *PostgresPostStore) GetByID(ctx context.Context, postID int64) (*Post, e
 		return nil, err
 	}
 	return &post, nil
+}
+
+func (s *PostgresPostStore) Delete(ctx context.Context, postID int64) error {
+	query := `
+	DELETE FROM posts
+	WHERE id = ($1);
+	`
+	_, err := s.db.ExecContext(ctx, query, postID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresPostStore) Patch(ctx context.Context, post *Post) error {
+	query := `
+	UPDATE posts SET title = $1, content = $2, updated_at = now() 
+	WHERE id = $3;
+	`
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(post.Title, post.Content,  post.ID)
+	return err
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -57,8 +56,51 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	fmt.Println(comments)
-	post.Comments = comments 
+	post.Comments = comments
 	writeJSON(w, http.StatusOK, post)
 }
 
+func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
+	strID := chi.URLParam(r, "postID")
+	id, err := strconv.ParseInt(strID, 10, 64)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	app.store.Posts.Delete(r.Context(), id)
+	writeJSON(w, http.StatusAccepted, map[string]string{"message": "post deleted successfully"})
+}
+
+func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) {
+	strID := chi.URLParam(r, "postID")
+	id, err := strconv.ParseInt(strID, 10, 64)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	var PostsParams *CreatePostsParams
+	if err := readJSON(w, r, &PostsParams); err != nil {
+		writeErrJSON(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := validate.Struct(PostsParams); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	post, err := app.store.Posts.GetByID(r.Context(), id)
+	if err != nil {
+		writeErrJSON(w, http.StatusNotFound, err.Error())
+		return
+	}
+	if PostsParams.Title != "" {
+		post.Title = PostsParams.Title
+	}
+	if PostsParams.Content != "" {
+		post.Content = PostsParams.Content
+	}
+	if err := app.store.Posts.Patch(r.Context(), post); err != nil {
+		writeErrJSON(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusAccepted, post)
+}
