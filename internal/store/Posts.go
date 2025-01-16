@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/lib/pq"
 )
@@ -59,7 +61,12 @@ func (s *PostgresPostStore) GetByID(ctx context.Context, postID int64) (*Post, e
 	var post Post
 	if err := s.db.QueryRowContext(ctx, query, postID).Scan(
 		&post.ID, &post.Title, &post.UserID, &post.Content, &post.CreatedAt, pq.Array(&post.Tags), &post.UpdatedAt); err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, fmt.Errorf("no data found")
+		default:
+			return nil, err
+		}
 	}
 	return &post, nil
 }
@@ -86,6 +93,6 @@ func (s *PostgresPostStore) Patch(ctx context.Context, post *Post) error {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(post.Title, post.Content,  post.ID)
+	_, err = stmt.Exec(post.Title, post.Content, post.ID)
 	return err
 }

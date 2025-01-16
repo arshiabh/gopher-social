@@ -43,7 +43,7 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 	idstr := chi.URLParam(r, "postID")
 	id, err := strconv.ParseInt(idstr, 10, 64)
 	if err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
 		return
 	}
 	post, err := app.store.Posts.GetByID(r.Context(), id)
@@ -75,7 +75,7 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 	strID := chi.URLParam(r, "postID")
 	id, err := strconv.ParseInt(strID, 10, 64)
 	if err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
 		return
 	}
 	var PostsParams *CreatePostsParams
