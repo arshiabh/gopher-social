@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -46,18 +48,24 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 		writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
 		return
 	}
-	post, err := app.store.Posts.GetByID(r.Context(), id)
-	if err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
-		return
+	var postctx PostCtx = "post"
+	posttt, ok := r.Context().Value(postctx).(*store.Post)
+	fmt.Println(posttt)
+	if !ok {
+		writeErrJSON(w, http.StatusInternalServerError, "failed to get post")
 	}
+	// post, err := app.store.Posts.GetByID(r.Context(), id)
+	// if err != nil {
+	// writeErrJSON(w, http.StatusBadRequest, err.Error())
+	// return
+	// }
 	comments, err := app.store.Comments.GetByPostID(r.Context(), id)
 	if err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	post.Comments = comments
-	writeJSON(w, http.StatusOK, post)
+	posttt.Comments = comments
+	writeJSON(w, http.StatusOK, posttt)
 }
 
 func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
@@ -103,4 +111,26 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusAccepted, post)
+}
+
+type PostCtx string
+
+func (app *application) postContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		strID := chi.URLParam(r, "postID")
+		postID, err := strconv.ParseInt(strID, 10, 64)
+		if err != nil {
+			writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
+			return
+		}
+		post, err := app.store.Posts.GetByID(r.Context(), postID)
+		if err != nil {
+			writeErrJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		var postctx PostCtx = "post"
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, postctx, post)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
