@@ -49,8 +49,8 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var postctx PostCtx = "post"
-	posttt, ok := r.Context().Value(postctx).(*store.Post)
-	fmt.Println(posttt)
+	post, ok := r.Context().Value(postctx).(*store.Post)
+	fmt.Println(post)
 	if !ok {
 		writeErrJSON(w, http.StatusInternalServerError, "failed to get post")
 	}
@@ -64,8 +64,8 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	posttt.Comments = comments
-	writeJSON(w, http.StatusOK, posttt)
+	post.Comments = comments
+	writeJSON(w, http.StatusOK, post)
 }
 
 func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
@@ -80,12 +80,6 @@ func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) {
-	strID := chi.URLParam(r, "postID")
-	id, err := strconv.ParseInt(strID, 10, 64)
-	if err != nil {
-		writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
-		return
-	}
 	var PostsParams *CreatePostsParams
 	if err := readJSON(w, r, &PostsParams); err != nil {
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
@@ -95,17 +89,14 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	post, err := app.store.Posts.GetByID(r.Context(), id)
+	post, err := getPostFromCtx(r)
 	if err != nil {
-		writeErrJSON(w, http.StatusNotFound, err.Error())
+		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if PostsParams.Title != "" {
-		post.Title = PostsParams.Title
-	}
-	if PostsParams.Content != "" {
-		post.Content = PostsParams.Content
-	}
+	post.Title = PostsParams.Title
+	post.Content = PostsParams.Content
+
 	if err := app.store.Posts.Patch(r.Context(), post); err != nil {
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
@@ -133,4 +124,13 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, postctx, post)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func getPostFromCtx(r *http.Request) (*store.Post, error) {
+	var postctx PostCtx = "post"
+	post, ok := r.Context().Value(postctx).(*store.Post)
+	if !ok {
+		return nil, fmt.Errorf("failed to get post")
+	}
+	return post, nil
 }
