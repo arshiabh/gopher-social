@@ -5,3 +5,5 @@ migrate-up:
 	@migrate -path ./cmd/migrate/migrations -database postgres://postgres:09300617050@localhost:5432/gopher-database?sslmode=disable up
 migrate-down:
 	@migrate -path ./cmd/migrate/migrations -database postgres://postgres:09300617050@localhost:5432/gopher-database?sslmode=disable down $(filter-out $@,$(MAKECMDGOALS)) 
+seed:
+	@go run cmd/migrate/seed/main.go 

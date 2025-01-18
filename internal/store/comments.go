@@ -6,6 +6,7 @@ import (
 )
 
 type CommentStore interface {
+	Create(context.Context, *Comments) error
 	GetByPostID(context.Context, int64) ([]Comments, error)
 }
 
@@ -28,6 +29,18 @@ func NewPostgresCommentStore(db *sql.DB) *PostgresCommentStore {
 	}
 }
 
+func (s *PostgresCommentStore) Create(ctx context.Context, comment *Comments) error {
+	query := `
+	INSERT INTO comments (post_id, user_id, content)
+	VALUES ($1, $2, $3) RETURNING id, created_at
+	`
+	res := s.db.QueryRowContext(ctx, query, comment.PostID, comment.UserID, comment.Content)
+	if err := res.Scan(&comment.ID, &comment.CreatedAt); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *PostgresCommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comments, error) {
 	query := `
 	SELECT c.id, c.user_id, c.post_id, c.content, c.created_at, users.id, users.username 
@@ -42,7 +55,7 @@ func (s *PostgresCommentStore) GetByPostID(ctx context.Context, postID int64) ([
 	for rows.Next() {
 		var c Comments
 		c.User = User{}
-		err := rows.Scan(&c.ID, &c.UserID, &c.PostID,&c.Content, &c.CreatedAt,
+		err := rows.Scan(&c.ID, &c.UserID, &c.PostID, &c.Content, &c.CreatedAt,
 			&c.User.ID, &c.User.Username)
 		if err != nil {
 			return nil, err
