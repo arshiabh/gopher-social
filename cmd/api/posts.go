@@ -38,7 +38,7 @@ func (app *application) HandleCreatePosts(w http.ResponseWriter, r *http.Request
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusAccepted, &post)
+	jsonResponse(w, http.StatusAccepted, &post)
 }
 
 func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
@@ -48,24 +48,18 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 		writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
 		return
 	}
-	var postctx PostCtx = "post"
-	post, ok := r.Context().Value(postctx).(*store.Post)
-	fmt.Println(post)
-	if !ok {
-		writeErrJSON(w, http.StatusInternalServerError, "failed to get post")
+	post, err := getPostFromCtx(r)
+	if err != nil {
+		writeErrJSON(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	// post, err := app.store.Posts.GetByID(r.Context(), id)
-	// if err != nil {
-	// writeErrJSON(w, http.StatusBadRequest, err.Error())
-	// return
-	// }
 	comments, err := app.store.Comments.GetByPostID(r.Context(), id)
 	if err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	post.Comments = comments
-	writeJSON(w, http.StatusOK, post)
+	jsonResponse(w, http.StatusOK, post)
 }
 
 func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +70,7 @@ func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	app.store.Posts.Delete(r.Context(), id)
-	writeJSON(w, http.StatusAccepted, map[string]string{"message": "post deleted successfully"})
+	jsonResponse(w, http.StatusAccepted, map[string]string{"message": "post deleted successfully"})
 }
 
 func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +95,7 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusAccepted, post)
+	jsonResponse(w, http.StatusAccepted, post)
 }
 
 type PostCtx string

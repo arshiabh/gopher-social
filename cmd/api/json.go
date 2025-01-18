@@ -33,3 +33,10 @@ func writeErrJSON(w http.ResponseWriter, status int, data string) error {
 	}
 	return writeJSON(w, status, envelope{Error: data})
 }
+
+func jsonResponse(w http.ResponseWriter, status int, data any) error {
+	type envelope struct {
+		Data any `json:"data"`
+	}
+	return writeJSON(w, status, &envelope{Data: data})
+}
