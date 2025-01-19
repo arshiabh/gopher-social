@@ -9,6 +9,7 @@ type Storage struct {
 	Users    UserStore
 	Posts    PostStore
 	Comments CommentStore
+	Followers FollowerStore
 }
 
 var (
@@ -20,5 +21,6 @@ func NewPostgresStorage(db *sql.DB) Storage {
 		Users:    NewPostgresUserStore(db),
 		Posts:    NewPostgresPostStore(db),
 		Comments: NewPostgresCommentStore(db),
+		Followers: NewPostgresFollowerStore(db),
 	}
 }

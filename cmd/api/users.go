@@ -20,6 +20,38 @@ func (app *application) HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type FollowUser struct {
+	UserID int64 `json:"user_id"`
+}
+
+func (app *application) HandleFollowUser(w http.ResponseWriter, r *http.Request) {
+	follower := getUserFromCtx(r)
+	var payload FollowUser
+	if err := readJSON(w, r, &payload); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := app.store.Followers.Follow(r.Context(), payload.UserID, follower); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	jsonResponse(w, http.StatusAccepted, map[string]string{"message": "successfully followed"})
+}
+
+func (app *application) HandleUnFollowUser(w http.ResponseWriter, r *http.Request) {
+	follower := getUserFromCtx(r)
+	var payload FollowUser
+	if err := readJSON(w, r, &payload); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := app.store.Followers.UnFollow(r.Context(), payload.UserID, follower); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	jsonResponse(w, http.StatusAccepted, map[string]string{"message": "successfully unfollowed"})
+}
+
 func (app *application) UserContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		strID := chi.URLParam(r, "userID")

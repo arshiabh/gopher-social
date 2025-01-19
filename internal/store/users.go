@@ -65,3 +65,5 @@ func (s *PostgresUserStore) GetByUserID(ctx context.Context, userid int64) (*Use
 	}
 	return &user, nil
 }
+
+
