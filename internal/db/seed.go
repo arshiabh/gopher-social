@@ -35,6 +35,7 @@ func Seed(store *store.Storage) {
 
 }
 
+// ** dont forget to add add init
 func generateUser(num int) []*store.User {
 	users := make([]*store.User, num)
 	for i := 0; i < num; i++ {
@@ -51,6 +52,7 @@ func generateUser(num int) []*store.User {
 func generatePost(num int, users []*store.User) []*store.Post {
 	posts := make([]*store.Post, num)
 	for i := 0; i < 200; i++ {
+		//** change the type right after to id and use it
 		user := users[rand.Intn(100)].ID
 		posts[i] = &store.Post{
 			ID:      int64(i),

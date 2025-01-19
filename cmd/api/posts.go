@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -42,21 +43,21 @@ func (app *application) HandleCreatePosts(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
-	idstr := chi.URLParam(r, "postID")
-	id, err := strconv.ParseInt(idstr, 10, 64)
-	if err != nil {
-		writeErrJSON(w, http.StatusBadRequest, "invalid type for id")
-		return
-	}
 	post, err := getPostFromCtx(r)
 	if err != nil {
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	comments, err := app.store.Comments.GetByPostID(r.Context(), id)
+	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
 	if err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
-		return
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			app.ErrNotFound(w)
+			return
+		default:
+			writeErrJSON(w, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 	post.Comments = comments
 	jsonResponse(w, http.StatusOK, post)

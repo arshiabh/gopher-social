@@ -1,6 +1,9 @@
 package store
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+)
 
 type Storage struct {
 	Users    UserStore
@@ -8,10 +11,14 @@ type Storage struct {
 	Comments CommentStore
 }
 
+var (
+	ErrNotFound = errors.New("data not founddd")
+)
+
 func NewPostgresStorage(db *sql.DB) Storage {
 	return Storage{
-		Users: NewPostgresUserStore(db),
-		Posts: NewPostgresPostStore(db),
+		Users:    NewPostgresUserStore(db),
+		Posts:    NewPostgresPostStore(db),
 		Comments: NewPostgresCommentStore(db),
 	}
 }

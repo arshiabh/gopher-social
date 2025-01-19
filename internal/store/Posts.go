@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -70,7 +69,7 @@ func (s *PostgresPostStore) GetByID(ctx context.Context, postID int64) (*Post, e
 		&post.ID, &post.Title, &post.UserID, &post.Content, &post.CreatedAt, pq.Array(&post.Tags), &post.UpdatedAt); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return nil, fmt.Errorf("no data found")
+			return nil, ErrNotFound
 		default:
 			return nil, err
 		}
