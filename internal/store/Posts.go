@@ -12,6 +12,7 @@ import (
 type PostStore interface {
 	Create(context.Context, *Post) error
 	GetByID(context.Context, int64) (*Post, error)
+	GetUserFeed(context.Context, int64) ([]PostWithMetaData, error)
 	Delete(context.Context, int64) error
 	Patch(context.Context, *Post) error
 }
@@ -25,6 +26,12 @@ type Post struct {
 	CreatedAt string     `json:"created_at"`
 	UpdatedAt string     `json:"updated_at"`
 	Comments  []Comments `json:"comments"`
+	User      User       `json:"user"`
+}
+
+type PostWithMetaData struct {
+	Post          Post
+	CommentsCount int64 `json:"comments_count"`
 }
 
 type PostgresPostStore struct {
@@ -35,6 +42,39 @@ func NewPostgresPostStore(db *sql.DB) *PostgresPostStore {
 	return &PostgresPostStore{
 		db: db,
 	}
+}
+
+func (s *PostgresPostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetaData, error) {
+	query := `
+	SELECT p.id, p.user_id, u.username, p.title, p.content, p.tags, p.created_at,
+	COUNT(c.id) AS comments_count FROM posts p
+	JOIN users u ON u.id = p.user_id
+	JOIN followers f ON f.follower_id = u.id OR p.user_id = ($1)
+	LEFT JOIN comments c ON c.post_id = p.id GROUP BY (p.id,u.username) 
+	ORDER BY p.created_at DESC;	
+	`
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+	defer cancel()
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var FeedList []PostWithMetaData
+	for rows.Next() {
+		var feed PostWithMetaData
+		feed.Post = Post{}
+		if err := rows.Scan(&feed.Post.ID,
+			&feed.Post.UserID,
+			&feed.Post.User.Username,
+			&feed.Post.Title,
+			&feed.Post.Content,
+			pq.Array(&feed.Post.Tags), &feed.Post.CreatedAt, &feed.CommentsCount); err != nil {
+			return nil, err
+		}
+		FeedList = append(FeedList, feed)
+	}
+	return FeedList, nil
 }
 
 func (s *PostgresPostStore) Create(ctx context.Context, post *Post) error {
