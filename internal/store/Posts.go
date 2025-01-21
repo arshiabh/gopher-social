@@ -50,13 +50,15 @@ func (s *PostgresPostStore) GetUserFeed(ctx context.Context, userID int64, fq Pa
 	COUNT(c.id) AS comments_count FROM posts p
 	JOIN users u ON u.id = p.user_id
 	JOIN followers f ON f.follower_id = u.id OR p.user_id = ($1)
-	LEFT JOIN comments c ON c.post_id = p.id GROUP BY (p.id,u.username) 
+	LEFT JOIN comments c ON c.post_id = p.id
+	WHERE f.user_id = ($1) AND ( p.content ILIKE '%' ||($4)|| '%' OR p.title ILIKE '%' ||($4)|| '%' ) 
+	GROUP BY (p.id,u.username) 
 	ORDER BY p.created_at ` + fq.Order + `
 	LIMIT ($2) OFFSET ($3);	
 	`
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
-	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset)
+	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset, fq.Search)
 	if err != nil {
 		return nil, err
 	}

@@ -9,9 +9,10 @@ type PaginatedFeedQuery struct {
 	Limit  int    `json:"limit" validate:"gte=1,lte=20"`
 	Offset int    `json:"offset" validate:"gte=0"`
 	Order  string `json:"order" validate:"oneof=asc desc"`
+	Search string `json:"search" validate:"max=100"`
 }
 
-func (fq *PaginatedFeedQuery) Parse(r *http.Request) ( error) {
+func (fq *PaginatedFeedQuery) Parse(r *http.Request) error {
 	qs := r.URL.Query()
 	limit := qs.Get("limit")
 	if limit != "" {
@@ -29,6 +30,11 @@ func (fq *PaginatedFeedQuery) Parse(r *http.Request) ( error) {
 			return err
 		}
 		fq.Offset = r
+	}
+
+	search := qs.Get("search")
+	if search != "" {
+		fq.Search = search
 	}
 	return nil
 }

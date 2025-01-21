@@ -20,7 +20,7 @@ func (app *application) HandleGetFeed(w http.ResponseWriter, r *http.Request) {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	feed, err := app.store.Posts.GetUserFeed(r.Context(), int64(42), fq)
+	feed, err := app.store.Posts.GetUserFeed(r.Context(), int64(34), fq)
 	if err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
