@@ -12,7 +12,7 @@ import (
 type PostStore interface {
 	Create(context.Context, *Post) error
 	GetByID(context.Context, int64) (*Post, error)
-	GetUserFeed(context.Context, int64) ([]PostWithMetaData, error)
+	GetUserFeed(context.Context, int64, PaginatedFeedQuery) ([]PostWithMetaData, error)
 	Delete(context.Context, int64) error
 	Patch(context.Context, *Post) error
 }
@@ -44,18 +44,19 @@ func NewPostgresPostStore(db *sql.DB) *PostgresPostStore {
 	}
 }
 
-func (s *PostgresPostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetaData, error) {
+func (s *PostgresPostStore) GetUserFeed(ctx context.Context, userID int64, fq PaginatedFeedQuery) ([]PostWithMetaData, error) {
 	query := `
 	SELECT p.id, p.user_id, u.username, p.title, p.content, p.tags, p.created_at,
 	COUNT(c.id) AS comments_count FROM posts p
 	JOIN users u ON u.id = p.user_id
 	JOIN followers f ON f.follower_id = u.id OR p.user_id = ($1)
 	LEFT JOIN comments c ON c.post_id = p.id GROUP BY (p.id,u.username) 
-	ORDER BY p.created_at DESC;	
+	ORDER BY p.created_at ` + fq.Order + `
+	LIMIT ($2) OFFSET ($3);	
 	`
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
-	rows, err := s.db.QueryContext(ctx, query, userID)
+	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset)
 	if err != nil {
 		return nil, err
 	}
