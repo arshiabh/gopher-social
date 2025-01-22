@@ -5,19 +5,37 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserStore interface {
 	Create(context.Context, *User) error
+	CreateAndInvite(context.Context, *User, string) error
 	GetByUserID(context.Context, int64) (*User, error)
 }
 
 type User struct {
-	ID        int64  `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Password  string `json:"-"`
-	CreatedAt string `json:"created_at"`
+	ID        int64    `json:"id"`
+	Username  string   `json:"username"`
+	Email     string   `json:"email"`
+	Password  Password `json:"-"`
+	CreatedAt string   `json:"created_at"`
+}
+
+type Password struct {
+	text *string
+	hash []byte
+}
+
+func (p *Password) Set(text string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	p.text = &text
+	p.hash = hash
+	return nil
 }
 
 type PostgresUserStore struct {
@@ -35,10 +53,12 @@ func (s *PostgresUserStore) Create(ctx context.Context, user *User) error {
 	INSERT INTO users (username, email, password) 
 	VALUES ($1,$2,$3) RETURNING id, created_at 
 	`
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+	defer cancel()
 	err := s.db.QueryRowContext(ctx, query,
 		user.Username,
 		user.Email,
-		user.Password,
+		user.Password.hash,
 	).Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		return err
@@ -66,4 +86,6 @@ func (s *PostgresUserStore) GetByUserID(ctx context.Context, userid int64) (*Use
 	return &user, nil
 }
 
-
+func (s *PostgresUserStore) CreateAndInvite(ctx context.Context, user *User, token string) error {
+	return nil
+}

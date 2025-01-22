@@ -43,8 +43,8 @@ func generateUser(num int) []*store.User {
 			ID:       int64(i),
 			Username: fmt.Sprintf("user%d", i),
 			Email:    fmt.Sprintf("email%d@gmail.com", i),
-			Password: "1234",
 		}
+		users[i].Password.Set("1234")
 	}
 	return users
 }
