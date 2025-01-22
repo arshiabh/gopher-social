@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/arshiabh/gopher-social/internal/store"
 )
@@ -30,9 +31,10 @@ func (app *application) HandleRegisterUser(w http.ResponseWriter, r *http.Reques
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	createdUser := app.store.Users.CreateAndInvite(r.Context(), &user, "token-123")
-	if err := jsonResponse(w, http.StatusCreated, createdUser); err != nil {
-		writeErrJSON(w, http.StatusInternalServerError, err.Error())
+	exp := time.Duration(time.Hour * 2)
+	if err := app.store.Users.CreateAndInvite(r.Context(), &user, exp, "token-123"); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 }

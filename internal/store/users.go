@@ -10,8 +10,8 @@ import (
 )
 
 type UserStore interface {
-	Create(context.Context, *User) error
-	CreateAndInvite(context.Context, *User, string) error
+	Create(context.Context, *sql.Tx, *User) error
+	CreateAndInvite(context.Context, *User, time.Duration, string) error
 	GetByUserID(context.Context, int64) (*User, error)
 }
 
@@ -48,14 +48,14 @@ func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 	}
 }
 
-func (s *PostgresUserStore) Create(ctx context.Context, user *User) error {
+func (s *PostgresUserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `
 	INSERT INTO users (username, email, password) 
 	VALUES ($1,$2,$3) RETURNING id, created_at 
 	`
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
-	err := s.db.QueryRowContext(ctx, query,
+	err := tx.QueryRowContext(ctx, query,
 		user.Username,
 		user.Email,
 		user.Password.hash,
@@ -86,6 +86,23 @@ func (s *PostgresUserStore) GetByUserID(ctx context.Context, userid int64) (*Use
 	return &user, nil
 }
 
-func (s *PostgresUserStore) CreateAndInvite(ctx context.Context, user *User, token string) error {
-	return nil
+func (s *PostgresUserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {
+	query := `
+	INSERT INTO user_invitation (token, user_id, expiry)
+	VALUES ($1,$2,$3) 
+	`
+	_, err := tx.ExecContext(ctx, query, token, userID, time.Now().Add(exp))
+	return err
+}
+
+func (s *PostgresUserStore) CreateAndInvite(ctx context.Context, user *User, exp time.Duration, token string) error {
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		if err := s.Create(ctx, tx, user); err != nil {
+			return err
+		}
+		if err := s.createUserInvitation(ctx, tx, token, exp, user.ID); err != nil {
+			return err
+		}
+		return nil
+	})
 }
