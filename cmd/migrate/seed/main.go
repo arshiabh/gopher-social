@@ -15,6 +15,6 @@ func main() {
 	}
 	defer DB.Close()
 	store := store.NewPostgresStorage(DB)
-	db.Seed(&store)
+	db.Seed(&store, DB)
 	fmt.Println("seeding is done")
 }

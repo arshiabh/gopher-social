@@ -10,13 +10,15 @@ import (
 	"github.com/arshiabh/gopher-social/internal/store"
 )
 
-func Seed(store *store.Storage) {
+func Seed(store *store.Storage, db *sql.DB) {
 	ctx := context.Background()
 	users := generateUser(100)
 	posts := generatePost(200, users)
 	comments := generateComments(500, users, posts)
+	tx, _ := db.BeginTx(ctx, nil)
 	for _, user := range users {
-		if err := store.Users.Create(ctx, &sql.Tx{}, user); err != nil {
+		if err := store.Users.Create(ctx, tx, user); err != nil {
+			tx.Rollback()
 			log.Fatal(err)
 			return
 		}
