@@ -52,6 +52,15 @@ func (app *application) HandleUnFollowUser(w http.ResponseWriter, r *http.Reques
 	jsonResponse(w, http.StatusAccepted, map[string]string{"message": "successfully unfollowed"})
 }
 
+func (app *application) HandlePostActivate(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if err := app.store.Users.Activate(r.Context(), token); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	jsonResponse(w, http.StatusOK, map[string]string{"message": "user successfully activated"})
+}
+
 func (app *application) UserContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		strID := chi.URLParam(r, "userID")

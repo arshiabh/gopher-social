@@ -51,6 +51,7 @@ func (app *application) mount() http.Handler {
 			})
 		})
 		r.Route("/users", func(r chi.Router) {
+			r.Post("/activate/{token}", app.HandlePostActivate)
 			r.Route("/{userID}", func(r chi.Router) {
 				r.Use(app.UserContextMiddleware)
 				r.Get("/", app.HandleGetUser)
@@ -60,9 +61,9 @@ func (app *application) mount() http.Handler {
 			r.Group(func(r chi.Router) {
 				r.Get("/feed", app.HandleGetFeed)
 			})
-			r.Route("/authentication", func(r chi.Router) {
-				r.Post("/user", app.HandleRegisterUser)
-			})
+		})
+		r.Route("/authentication", func(r chi.Router) {
+			r.Post("/user", app.HandleRegisterUser)
 		})
 	})
 	return r
