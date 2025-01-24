@@ -1,0 +1,14 @@
+Hi,
+
+Welcome to Gopher Social! We're thrilled to have you join our community.
+
+To get started, please activate your account by visiting the following link:
+
+https://example.com/activate?token=your_activation_token
+
+If you didn’t create this account, no further action is required. You can ignore this email.
+
+Thank you for joining us! If you have any questions, feel free to reach out to our support team at support@gophersocial.com.
+
+Cheers,
+The Gopher Social Team

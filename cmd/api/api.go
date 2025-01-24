@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/arshiabh/gopher-social/internal/mail"
 	"github.com/arshiabh/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -13,11 +14,18 @@ import (
 type application struct {
 	config config
 	store  store.Storage
+	mail   mail.Client
 }
 
 type config struct {
 	addr string
 	db   dbconfig
+	mail mailconfig
+}
+
+type mailconfig struct {
+	apiKey    string
+	fromEmail string
 }
 
 type dbconfig struct {
@@ -51,7 +59,7 @@ func (app *application) mount() http.Handler {
 			})
 		})
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/activate/{token}", app.HandlePostActivate)
+			r.Put("/activate/{token}", app.HandlePostActivate)
 			r.Route("/{userID}", func(r chi.Router) {
 				r.Use(app.UserContextMiddleware)
 				r.Get("/", app.HandleGetUser)

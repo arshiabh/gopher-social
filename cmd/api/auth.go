@@ -52,5 +52,9 @@ func (app *application) HandleRegisterUser(w http.ResponseWriter, r *http.Reques
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if err := app.mail.Send(user.Username, user.Email); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	jsonResponse(w, http.StatusCreated, map[string]any{"user created successfully": userwithToken})
 }
