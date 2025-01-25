@@ -17,34 +17,6 @@ type application struct {
 	mail   mail.Client
 }
 
-type config struct {
-	addr string
-	db   dbconfig
-	mail mailconfig
-	auth authconfig
-}
-
-type authconfig struct {
-	name     string
-	password string
-}
-
-type mailconfig struct {
-	sendgridcfg
-}
-
-type sendgridcfg struct {
-	apiKey    string
-	fromEmail string
-}
-
-type dbconfig struct {
-	addr         string
-	maxOpenConns int
-	maxIdleConns int
-	maxIdleTime  string
-}
-
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 

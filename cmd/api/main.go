@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/arshiabh/gopher-social/internal/db"
 	"github.com/arshiabh/gopher-social/internal/mail"
@@ -15,25 +14,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg := config{
-		addr: os.Getenv("addr"),
-		db: dbconfig{
-			addr:         os.Getenv("DBaddr"),
-			maxOpenConns: 30,
-			maxIdleConns: 30,
-			maxIdleTime:  "15m",
-		},
-		mail: mailconfig{
-			sendgridcfg{
-				apiKey:    "api_key",
-				fromEmail: "from email",
-			},
-		},
-		auth: authconfig{
-			name:     "arshia",
-			password: "1234",
-		},
-	}
+	cfg := Config()
 	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
 	if err != nil {
 		log.Panic(err)
@@ -42,7 +23,7 @@ func main() {
 	store := store.NewPostgresStorage(db)
 	mailer := mail.NewSendGrip(cfg.mail.apiKey, cfg.mail.fromEmail)
 	app := &application{
-		config: cfg,
+		config: *cfg,
 		store:  store,
 		mail:   mailer,
 	}
