@@ -24,8 +24,14 @@ func main() {
 			maxIdleTime:  "15m",
 		},
 		mail: mailconfig{
-			apiKey:    "sdf",
-			fromEmail: "testemail",
+			sendgridcfg{
+				apiKey:    "api_key",
+				fromEmail: "from email",
+			},
+		},
+		auth: authconfig{
+			name:     "arshia",
+			password: "1234",
 		},
 	}
 	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)

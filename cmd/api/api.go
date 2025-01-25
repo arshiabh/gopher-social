@@ -21,9 +21,19 @@ type config struct {
 	addr string
 	db   dbconfig
 	mail mailconfig
+	auth authconfig
+}
+
+type authconfig struct {
+	name     string
+	password string
 }
 
 type mailconfig struct {
+	sendgridcfg
+}
+
+type sendgridcfg struct {
 	apiKey    string
 	fromEmail string
 }
@@ -43,12 +53,14 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Set a timeout value on the request context (ctx), that will signal
-	// through ctx.Done() that the request has timed out and further
-	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Route("/health", func(r chi.Router) {
+			r.Use(app.BasicAuthMiddleware)
+			r.Get("/", app.HandleGetHealth)
+		})
+
 		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.HandleCreatePosts)
 			r.Route("/{postID}", func(r chi.Router) {
@@ -70,7 +82,7 @@ func (app *application) mount() http.Handler {
 				r.Get("/feed", app.HandleGetFeed)
 			})
 		})
-		r.Route("/authentication", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
 			r.Post("/user", app.HandleRegisterUser)
 		})
 	})
