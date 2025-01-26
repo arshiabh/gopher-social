@@ -15,6 +15,7 @@ type UserStore interface {
 	Create(context.Context, *sql.Tx, *User) error
 	CreateAndInvite(context.Context, *User, time.Duration, string) error
 	GetByUserID(context.Context, int64) (*User, error)
+	GetByEmail(context.Context, string) (*User, error)
 	Activate(context.Context, string) error
 }
 
@@ -88,6 +89,22 @@ func (s *PostgresUserStore) GetByUserID(ctx context.Context, userid int64) (*Use
 		}
 	}
 	return &user, nil
+}
+
+func (s *PostgresUserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
+	query := `
+	SELECT id,username, email FROM users
+	WHERE email = ($1) AND is_active = true ; 
+	`
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+	defer cancel()
+
+	user := &User{}
+	row := s.db.QueryRowContext(ctx, query, email)
+	if err := row.Scan(&user.ID, &user.Username, &user.Email); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func (s *PostgresUserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {

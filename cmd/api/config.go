@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 type config struct {
 	addr string
@@ -10,6 +13,16 @@ type config struct {
 }
 
 type authconfig struct {
+	baseconfig
+	jwtconfig
+}
+
+type jwtconfig struct {
+	secret string
+	exp    time.Duration
+}
+
+type baseconfig struct {
 	name     string
 	password string
 }
@@ -46,8 +59,14 @@ func Config() *config {
 			},
 		},
 		auth: authconfig{
-			name:     "arshia",
-			password: "1234",
+			baseconfig: baseconfig{
+				name:     "arshia",
+				password: "1234",
+			},
+			jwtconfig: jwtconfig{
+				secret: "supersecret",
+				exp:    time.Hour * 24 * 3,
+			},
 		},
 	}
 }

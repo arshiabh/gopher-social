@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/arshiabh/gopher-social/internal/auth"
 	"github.com/arshiabh/gopher-social/internal/mail"
 	"github.com/arshiabh/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -15,6 +16,7 @@ type application struct {
 	config config
 	store  store.Storage
 	mail   mail.Client
+	auth   auth.Authenticator
 }
 
 func (app *application) mount() http.Handler {
@@ -42,6 +44,7 @@ func (app *application) mount() http.Handler {
 				r.Patch("/", app.HandlePatchPost)
 			})
 		})
+
 		r.Route("/users", func(r chi.Router) {
 			r.Put("/activate/{token}", app.HandlePostActivate)
 			r.Route("/{userID}", func(r chi.Router) {
@@ -54,8 +57,10 @@ func (app *application) mount() http.Handler {
 				r.Get("/feed", app.HandleGetFeed)
 			})
 		})
+
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/user", app.HandleRegisterUser)
+			r.Post("/token", app.HandlePostToken)
 		})
 	})
 	return r

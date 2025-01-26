@@ -21,8 +21,8 @@ func (app *application) BasicAuthMiddleware(next http.Handler) http.Handler {
 		}
 		src, _ := base64.StdEncoding.DecodeString(ls[1])
 		params := strings.Split(string(src), ":")
-		name := app.config.auth.name
-		password := app.config.auth.password
+		name := app.config.auth.baseconfig.name
+		password := app.config.auth.baseconfig.password
 		fmt.Println(params[0])
 		if params[0] != name || params[1] != password {
 			writeErrJSON(w, http.StatusBadRequest, "invalid name or password")

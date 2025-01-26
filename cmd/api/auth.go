@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/arshiabh/gopher-social/internal/store"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -53,4 +54,37 @@ func (app *application) HandleRegisterUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	jsonResponse(w, http.StatusCreated, map[string]any{"user created successfully": userwithToken})
+}
+
+func (app *application) HandlePostToken(w http.ResponseWriter, r *http.Request) {
+	var payload RegisterUserPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validate.Struct(payload); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, "user does not exists")
+		return
+	}
+	claims := jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(app.config.auth.exp).Unix(),
+		"nbf": time.Now().Unix(),
+		"iat": time.Now().Unix(),
+	}
+
+	token, err := app.auth.GenerateToken(claims)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := jsonResponse(w, http.StatusCreated, map[any]any{"token": token}); err != nil {
+		writeErrJSON(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
