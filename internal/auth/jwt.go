@@ -1,6 +1,11 @@
 package auth
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"fmt"
+	"log"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type JWTAuth struct {
 	secret string
@@ -22,5 +27,22 @@ func (a *JWTAuth) GenerateToken(claim jwt.Claims) (string, error) {
 }
 
 func (a *JWTAuth) ValidateToken(token string) (*jwt.Token, error) {
-	return nil, nil
+	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return []byte(a.secret), nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
+		fmt.Println(claims["sub"], claims["nbf"])
+	} else {
+		fmt.Println(err)
+	}
+	return jwtToken, err
 }

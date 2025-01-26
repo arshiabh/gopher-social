@@ -83,7 +83,7 @@ func (app *application) HandlePostToken(w http.ResponseWriter, r *http.Request) 
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := jsonResponse(w, http.StatusCreated, map[any]any{"token": token}); err != nil {
+	if err := jsonResponse(w, http.StatusCreated, map[string]string{"token": token}); err != nil {
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
