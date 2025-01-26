@@ -26,12 +26,8 @@ type FollowUser struct {
 
 func (app *application) HandleFollowUser(w http.ResponseWriter, r *http.Request) {
 	follower := getUserFromCtx(r)
-	var payload FollowUser
-	if err := readJSON(w, r, &payload); err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := app.store.Followers.Follow(r.Context(), payload.UserID, follower); err != nil {
+	userID, _ := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err := app.store.Followers.Follow(r.Context(), userID, follower); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -40,12 +36,8 @@ func (app *application) HandleFollowUser(w http.ResponseWriter, r *http.Request)
 
 func (app *application) HandleUnFollowUser(w http.ResponseWriter, r *http.Request) {
 	follower := getUserFromCtx(r)
-	var payload FollowUser
-	if err := readJSON(w, r, &payload); err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := app.store.Followers.UnFollow(r.Context(), payload.UserID, follower); err != nil {
+	userID, _ := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err := app.store.Followers.UnFollow(r.Context(), userID, follower); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}

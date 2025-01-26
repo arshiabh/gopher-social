@@ -28,12 +28,13 @@ func (app *application) HandleCreatePosts(w http.ResponseWriter, r *http.Request
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	user := getUserFromCtx(r)
 
 	post := &store.Post{
 		Title:   PostsParams.Title,
 		Content: PostsParams.Content,
 		Tags:    PostsParams.Tags,
-		UserID:  1,
+		UserID:  user.ID,
 	}
 	if err := app.store.Posts.Create(r.Context(), post); err != nil {
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())

@@ -34,13 +34,13 @@ func (a *JWTAuth) ValidateToken(token string) (*jwt.Token, error) {
 		}
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte(a.secret), nil
-	})
+	}, jwt.WithExpirationRequired())
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
-		fmt.Println(claims["sub"], claims["nbf"])
+		fmt.Println(claims["sub"])
 	} else {
 		fmt.Println(err)
 	}

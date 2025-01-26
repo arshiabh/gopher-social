@@ -54,10 +54,15 @@ func (app *application) JWTAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		claims := jwtToken.Claims.(jwt.MapClaims)
-		sub := claims["sub"]
-		type userCtx interface{}
-		var userctx userCtx = "userID"
-		ctx := context.WithValue(r.Context(), userctx, sub)
+		userID := claims["sub"].(float64)
+		user, err := app.store.Users.GetByUserID(r.Context(), int64(userID))
+		if err != nil {
+			writeErrJSON(w, http.StatusUnauthorized, "invalid authorization")
+			return
+
+		}
+		var userStr userCtx = "user"
+		ctx := context.WithValue(r.Context(), userStr, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

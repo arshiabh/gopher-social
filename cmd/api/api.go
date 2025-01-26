@@ -49,7 +49,7 @@ func (app *application) mount() http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			r.Put("/activate/{token}", app.HandlePostActivate)
 			r.Route("/{userID}", func(r chi.Router) {
-				r.Use(app.UserContextMiddleware)
+				r.Use(app.JWTAuthMiddleware)
 				r.Get("/", app.HandleGetUser)
 				r.Put("/follow", app.HandleFollowUser)
 				r.Put("/unfollow", app.HandleUnFollowUser)

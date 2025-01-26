@@ -29,12 +29,12 @@ func NewPostgresFollowerStore(db *sql.DB) *PostgresFollowerStore {
 
 func (s *PostgresFollowerStore) Follow(ctx context.Context, userID int64, follower *User) error {
 	query := `
-	INSERT INTO followers (follower_id, user_id)
+	INSERT INTO followers (user_id, follower_id)
 	VALUES ($1,$2); 
 	`
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
-	_, err := s.db.ExecContext(ctx, query, follower.ID, userID)
+	_, err := s.db.ExecContext(ctx, query, userID, follower.ID)
 	if err != nil {
 		return err
 	}
