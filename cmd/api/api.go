@@ -55,6 +55,7 @@ func (app *application) mount() http.Handler {
 				r.Put("/unfollow", app.HandleUnFollowUser)
 			})
 			r.Group(func(r chi.Router) {
+				r.Use(app.JWTAuthMiddleware)
 				r.Get("/feed", app.HandleGetFeed)
 			})
 		})

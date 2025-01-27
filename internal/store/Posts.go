@@ -123,7 +123,7 @@ func (s *PostgresPostStore) GetByID(ctx context.Context, postID int64) (*Post, e
 func (s *PostgresPostStore) Delete(ctx context.Context, postID int64) error {
 	query := `
 	DELETE FROM posts
-	WHERE id = ($1);
+	WHERE id = ($1) ;
 	`
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()

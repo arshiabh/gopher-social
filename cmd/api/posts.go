@@ -65,13 +65,16 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
-	strID := chi.URLParam(r, "postID")
-	id, err := strconv.ParseInt(strID, 10, 64)
-	if err != nil {
+	post, _ := getPostFromCtx(r)
+	user := getUserFromCtx(r)
+	if user.ID != post.UserID {
+		writeErrJSON(w, http.StatusForbidden, "user is not auhtorized")
+		return
+	}
+	if err := app.store.Posts.Delete(r.Context(), post.ID); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	app.store.Posts.Delete(r.Context(), id)
 	jsonResponse(w, http.StatusAccepted, map[string]string{"message": "post deleted successfully"})
 }
 
@@ -81,13 +84,14 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if err := validate.Struct(PostsParams); err != nil {
-		writeErrJSON(w, http.StatusBadRequest, err.Error())
+	user := getUserFromCtx(r)
+	post, _ := getPostFromCtx(r)
+	if user.ID != post.UserID {
+		writeErrJSON(w, http.StatusForbidden, "user is not auhtorized")
 		return
 	}
-	post, err := getPostFromCtx(r)
-	if err != nil {
-		writeErrJSON(w, http.StatusInternalServerError, err.Error())
+	if err := validate.Struct(PostsParams); err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	post.Title = PostsParams.Title

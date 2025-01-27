@@ -36,8 +36,8 @@ func (app *application) HandleFollowUser(w http.ResponseWriter, r *http.Request)
 
 func (app *application) HandleUnFollowUser(w http.ResponseWriter, r *http.Request) {
 	follower := getUserFromCtx(r)
-	userID, _ := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
-	if err := app.store.Followers.UnFollow(r.Context(), userID, follower); err != nil {
+	unfollowID, _ := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err := app.store.Followers.UnFollow(r.Context(), unfollowID, follower); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
