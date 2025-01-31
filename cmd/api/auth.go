@@ -35,6 +35,7 @@ func (app *application) HandleRegisterUser(w http.ResponseWriter, r *http.Reques
 	user := store.User{
 		Username: payload.Username,
 		Email:    payload.Email,
+		RoleID:   1,
 	}
 	if err := user.Password.Set(payload.Password); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
