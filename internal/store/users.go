@@ -26,6 +26,7 @@ type User struct {
 	Password  Password `json:"-"`
 	IsActive  bool     `json:"is_active"`
 	CreatedAt string   `json:"created_at"`
+	RoleID    int64    `json:"role_id"`
 }
 
 type Password struct {
@@ -56,7 +57,7 @@ func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 func (s *PostgresUserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `
 	INSERT INTO users (username, email, password) 
-	VALUES ($1,$2,$3) RETURNING id, created_at 
+	VALUES ($1,$2,$3,$4) RETURNING id, created_at 
 	`
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
@@ -64,6 +65,7 @@ func (s *PostgresUserStore) Create(ctx context.Context, tx *sql.Tx, user *User) 
 		user.Username,
 		user.Email,
 		user.Password.hash,
+		user.RoleID,
 	).Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		return err

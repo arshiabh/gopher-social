@@ -106,7 +106,7 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 
 type PostCtx string
 
-func (app *application) postContextMiddleware(next http.Handler) http.Handler {
+func (app *application) postContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		strID := chi.URLParam(r, "postID")
 		postID, err := strconv.ParseInt(strID, 10, 64)

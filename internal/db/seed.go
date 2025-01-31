@@ -15,6 +15,7 @@ func Seed(store *store.Storage, db *sql.DB) {
 	users := generateUser(100)
 	posts := generatePost(200, users)
 	comments := generateComments(500, users, posts)
+
 	tx, _ := db.BeginTx(ctx, nil)
 	for _, user := range users {
 		if err := store.Users.Create(ctx, tx, user); err != nil {
@@ -46,6 +47,7 @@ func generateUser(num int) []*store.User {
 			ID:       int64(i),
 			Username: fmt.Sprintf("user%d", i),
 			Email:    fmt.Sprintf("email%d@gmail.com", i),
+			RoleID:   1,
 		}
 		users[i].Password.Set("1234")
 	}

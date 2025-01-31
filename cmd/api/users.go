@@ -53,7 +53,7 @@ func (app *application) HandlePostActivate(w http.ResponseWriter, r *http.Reques
 	jsonResponse(w, http.StatusOK, map[string]string{"message": "user successfully activated"})
 }
 
-func (app *application) UserContextMiddleware(next http.Handler) http.Handler {
+func (app *application) UserContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		strID := chi.URLParam(r, "userID")
 		id, err := strconv.ParseInt(strID, 10, 64)
