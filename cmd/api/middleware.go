@@ -61,8 +61,30 @@ func (app *application) JWTAuthMiddleware(next http.Handler) http.Handler {
 			return
 
 		}
+		//set user when jwt done to context
 		var userStr userCtx = "user"
 		ctx := context.WithValue(r.Context(), userStr, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (app *application) checkPostOwnership(role string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := getUserFromCtx(r)
+		post := getPostFromCtx(r)
+		roleName, err := app.store.Users.GetUserRole(r.Context(), user.ID)
+		if err != nil {
+			writeErrJSON(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if post.UserID == user.ID {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if roleName != role {
+			writeErrJSON(w, http.StatusForbidden, "forbidden action")
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }

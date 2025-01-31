@@ -17,6 +17,7 @@ type UserStore interface {
 	GetByUserID(context.Context, int64) (*User, error)
 	GetByEmail(context.Context, string) (*User, error)
 	Activate(context.Context, string) error
+	GetUserRole(context.Context, int64) (string, error)
 }
 
 type User struct {
@@ -71,6 +72,19 @@ func (s *PostgresUserStore) Create(ctx context.Context, tx *sql.Tx, user *User) 
 		return err
 	}
 	return nil
+}
+
+func (s *PostgresUserStore) GetUserRole(ctx context.Context, RoleID int64) (string, error) {
+	query := `
+	SELECT name FROM roles
+	WHERE id = ($1);
+	`
+	row := s.db.QueryRowContext(ctx, query, RoleID)
+	var RoleName string
+	if err := row.Scan(&RoleName); err != nil {
+		return "", err
+	}
+	return RoleName, nil
 }
 
 func (s *PostgresUserStore) GetByUserID(ctx context.Context, userid int64) (*User, error) {

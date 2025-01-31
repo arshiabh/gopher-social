@@ -41,8 +41,8 @@ func (app *application) mount() http.Handler {
 			r.Route("/{postID}", func(r chi.Router) {
 				r.Use(app.postContext)
 				r.Get("/", app.HandleGetPost)
-				r.Delete("/", app.HandleDeletePost)
-				r.Patch("/", app.HandlePatchPost)
+				r.Patch("/", app.checkPostOwnership("moderator", app.HandlePatchPost))
+				r.Delete("/", app.checkPostOwnership("admin", app.HandleDeletePost))
 			})
 		})
 
@@ -50,7 +50,6 @@ func (app *application) mount() http.Handler {
 			r.Put("/activate/{token}", app.HandlePostActivate)
 			r.Route("/{userID}", func(r chi.Router) {
 				r.Use(app.JWTAuthMiddleware)
-				r.Use(app.UserContext)
 				r.Get("/", app.HandleGetUser)
 				r.Put("/follow", app.HandleFollowUser)
 				r.Put("/unfollow", app.HandleUnFollowUser)

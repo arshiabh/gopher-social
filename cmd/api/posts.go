@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -44,11 +43,7 @@ func (app *application) HandleCreatePosts(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
-	post, err := getPostFromCtx(r)
-	if err != nil {
-		writeErrJSON(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+	post := getPostFromCtx(r)
 	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
 	if err != nil {
 		switch {
@@ -65,12 +60,7 @@ func (app *application) HandleGetPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
-	post, _ := getPostFromCtx(r)
-	user := getUserFromCtx(r)
-	if user.ID != post.UserID {
-		writeErrJSON(w, http.StatusForbidden, "user is not auhtorized")
-		return
-	}
+	post := getPostFromCtx(r)
 	if err := app.store.Posts.Delete(r.Context(), post.ID); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
@@ -84,12 +74,7 @@ func (app *application) HandlePatchPost(w http.ResponseWriter, r *http.Request) 
 		writeErrJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	user := getUserFromCtx(r)
-	post, _ := getPostFromCtx(r)
-	if user.ID != post.UserID {
-		writeErrJSON(w, http.StatusForbidden, "user is not auhtorized")
-		return
-	}
+	post := getPostFromCtx(r)
 	if err := validate.Struct(PostsParams); err != nil {
 		writeErrJSON(w, http.StatusBadRequest, err.Error())
 		return
@@ -126,11 +111,8 @@ func (app *application) postContext(next http.Handler) http.Handler {
 	})
 }
 
-func getPostFromCtx(r *http.Request) (*store.Post, error) {
+func getPostFromCtx(r *http.Request) *store.Post {
 	var postctx PostCtx = "post"
-	post, ok := r.Context().Value(postctx).(*store.Post)
-	if !ok {
-		return nil, fmt.Errorf("failed to get post")
-	}
-	return post, nil
+	post := r.Context().Value(postctx).(*store.Post)
+	return post
 }
