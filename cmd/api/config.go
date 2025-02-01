@@ -6,10 +6,11 @@ import (
 )
 
 type config struct {
-	addr string
-	db   dbconfig
-	mail mailconfig
-	auth authconfig
+	addr  string
+	db    dbconfig
+	redis redisconfig
+	mail  mailconfig
+	auth  authconfig
 }
 
 type authconfig struct {
@@ -43,6 +44,13 @@ type dbconfig struct {
 	maxIdleTime  string
 }
 
+type redisconfig struct {
+	addr     string
+	password string
+	db       int
+	enable   bool
+}
+
 func Config() *config {
 	return &config{
 		addr: os.Getenv("addr"),
@@ -67,6 +75,12 @@ func Config() *config {
 				secret: "supersecret",
 				exp:    time.Hour * 24 * 3,
 			},
+		},
+		redis: redisconfig{
+			addr:     "localhost:6379",
+			password: "",
+			db:       0,
+			enable:   false,
 		},
 	}
 }

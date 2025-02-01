@@ -8,6 +8,7 @@ import (
 	"github.com/arshiabh/gopher-social/internal/auth"
 	"github.com/arshiabh/gopher-social/internal/mail"
 	"github.com/arshiabh/gopher-social/internal/store"
+	"github.com/arshiabh/gopher-social/internal/store/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -15,6 +16,7 @@ import (
 type application struct {
 	config config
 	store  store.Storage
+	cache cache.Storage
 	mail   mail.Client
 	auth   auth.Authenticator
 }
