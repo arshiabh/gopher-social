@@ -80,7 +80,7 @@ func Config() *config {
 			addr:     "localhost:6379",
 			password: "",
 			db:       0,
-			enable:   false,
+			enable:   true,
 		},
 	}
 }

@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/arshiabh/gopher-social/internal/store"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -26,7 +26,6 @@ func (app *application) BasicAuthMiddleware(next http.Handler) http.Handler {
 		params := strings.Split(string(src), ":")
 		name := app.config.auth.baseconfig.name
 		password := app.config.auth.baseconfig.password
-		fmt.Println(params[0])
 		if params[0] != name || params[1] != password {
 			writeErrJSON(w, http.StatusBadRequest, "invalid name or password")
 			return
@@ -55,9 +54,9 @@ func (app *application) JWTAuthMiddleware(next http.Handler) http.Handler {
 		}
 		claims := jwtToken.Claims.(jwt.MapClaims)
 		userID := claims["sub"].(float64)
-		user, err := app.store.Users.GetByUserID(r.Context(), int64(userID))
+		user, err := app.getUser(r.Context(), int64(userID))
 		if err != nil {
-			writeErrJSON(w, http.StatusUnauthorized, "invalid authorization")
+			writeErrJSON(w, http.StatusUnauthorized, err.Error())
 			return
 
 		}
@@ -87,4 +86,21 @@ func (app *application) checkPostOwnership(role string, next http.HandlerFunc) h
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (app *application) getUser(ctx context.Context, userID int64) (*store.User, error) {
+	user, err := app.cache.User.Get(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		user, err = app.store.Users.GetByUserID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		if err := app.cache.User.Set(ctx, user); err != nil {
+			return nil, err
+		}
+	}
+	return user, nil
 }

@@ -14,7 +14,12 @@ import (
 type userCtx string
 
 func (app *application) HandleGetUser(w http.ResponseWriter, r *http.Request) {
-	user := getUserFromCtx(r)
+	userID, _ := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	user, err := app.getUser(r.Context(), userID)
+	if err != nil {
+		writeErrJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := jsonResponse(w, http.StatusOK, user); err != nil {
 		log.Fatal(err)
 	}
